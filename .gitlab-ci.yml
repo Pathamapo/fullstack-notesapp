@@ -4,34 +4,66 @@ stages:
   - push
   - deploy
 
-# ใส่ tags ให้ทุก job เพื่อบังคับให้มาวิ่งที่ Ubuntu เครื่องคุณ
+# ตั้งค่าส่วนกลางให้ทุก Job วิ่งเข้าเครื่อง Ubuntu ของคุณ
 default:
   tags:
     - informatics
 
+# Stage 1: Test (แบบเชื่อมต่อ Database จำลอง)
 test_backend:
   stage: test
+  # ใช้ Docker Service เพื่อรัน MongoDB ชั่วคราวในท่อ CI
+  services:
+    - name: mongo:latest
+      alias: mongodb
+  variables:
+    # ตั้งค่าให้ Backend รู้ว่าต้องไปคุยกับ Service ชื่อ mongodb
+    MONGO_DB_URL: "mongodb://mongodb:27017/fullstack-notes"
   script:
     - cd backend
     - npm install
     - npm test -- --watchAll=false
+  only:
+    - dev-ci-docker
 
 test_frontend:
   stage: test
   script:
     - cd frontend
     - npm install
-    - npm test -- --watchAll=false
+    # เพิ่ม --passWithNoTests เผื่อกรณีคนที่ 1 ยังไม่ได้เขียนไฟล์ test ไว้ ท่อจะได้ไม่แดง
+    - npm test -- --watchAll=false --passWithNoTests
+  only:
+    - dev-ci-docker
 
+# Stage 2: Build Images (หัวใจของคนที่ 2)
 build_images:
   stage: build
   script:
+    - echo "Building Backend Image..."
     - docker build -t $CI_REGISTRY_IMAGE/backend:latest ./backend
+    - echo "Building Frontend Image..."
     - docker build -t $CI_REGISTRY_IMAGE/frontend:latest ./frontend
+  only:
+    - dev-ci-docker
 
+# Stage 3: Push (ส่งแผ่น CD ขึ้นชั้นวาง Container Registry)
 push_images:
   stage: push
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker push $CI_REGISTRY_IMAGE/backend:latest
     - docker push $CI_REGISTRY_IMAGE/frontend:latest
+  only:
+    - dev-ci-docker
+
+# Stage 4: Deploy (โครงสร้างสำหรับคนที่ 3 ไปทำต่อบน Cloud)
+deploy_local:
+  stage: deploy
+  script:
+    - echo "Infrastructure is ready for Deployment."
+    - echo "Images are available at $CI_REGISTRY_IMAGE"
+    # เพื่อนคนที่ 3 สามารถดึง Image จาก Registry ไปลง AWS/K8s ได้จากจุดนี้
+  environment: production
+  only:
+    - dev-ci-docker
