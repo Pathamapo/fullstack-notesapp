@@ -46,20 +46,23 @@ build_images:
   only:
     - dev-ci-docker
 
-# Stage 3: Push (ส่งไฟล์ขึ้นระบบมอ - ใส่สคริปต์ Retry 3 รอบกันเน็ตหลุด)
+# Stage 3: Push 
 push_images:
   stage: push
+  before_script:
+    # เคลียร์ Login เก่าและเข้าระบบใหม่ก่อนเริ่มงานทุกครั้ง
+    - docker logout $CI_REGISTRY
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - echo "Pushing Backend Image..."
     - |
-      for i in {1..3}; do
-        docker push $CI_REGISTRY_IMAGE/backend:latest && break || (echo "Retry $i..." && sleep 10);
+      for i in {1..5}; do
+        docker push $CI_REGISTRY_IMAGE/backend:latest && echo "Backend Push Success!" && break || (echo "Retry $i in 15s..." && sleep 15);
       done
     - echo "Pushing Frontend Image..."
     - |
-      for i in {1..3}; do
-        docker push $CI_REGISTRY_IMAGE/frontend:latest && break || (echo "Retry $i..." && sleep 10);
+      for i in {1..5}; do
+        docker push $CI_REGISTRY_IMAGE/frontend:latest && echo "Frontend Push Success!" && break || (echo "Retry $i in 15s..." && sleep 15);
       done
   only:
     - dev-ci-docker
