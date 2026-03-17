@@ -27,15 +27,15 @@ require('./config/passport');
 // Initialize app
 const app = express();
 
-// Connect database
+// ✅ Connect database
 connectDB();
 
 // Body parser
 app.use(express.json());
 
-// CORS
+// ✅ CORS (แก้ให้ flexible สำหรับ Docker / deploy)
 app.use(cors({
-	origin: 'http://localhost:3000',
+	origin: process.env.CLIENT_URL || 'http://localhost:3000',
 	credentials: true
 }));
 
@@ -45,19 +45,20 @@ app.use(helmet());
 app.use(xss());
 app.use(hpp());
 
-// Session
-const sessionStore = new MongoStore({
+// ✅ Session store (แก้ให้ไม่พังเวลา env ไม่มี)
+const sessionStore = MongoStore.create({
 	mongoUrl: process.env.MONGO_DB_URI,
 });
 
 app.use(
 	session({
-		secret: process.env.SESSION_SECRET,
+		secret: process.env.SESSION_SECRET || 'secret123',
 		resave: false,
-		saveUninitialized: true,
+		saveUninitialized: false,
 		store: sessionStore,
 		cookie: {
 			maxAge: 1000 * 3600 * 24,
+			httpOnly: true,
 		},
 	})
 );
@@ -66,15 +67,20 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// ✅ Health check (สำคัญมากสำหรับ Docker / K8s)
+app.get('/', (req, res) => {
+	res.send('Backend is running 🚀');
+});
+
 // Routes
 app.use('/users', usersRoute);
 app.use('/notes', notesRoute);
 
-// Server
-const PORT = process.env.PORT || 5000;
+// ✅ Port (แก้ให้ตรง Docker)
+const PORT = process.env.PORT || 3001;
 
 const server = app.listen(PORT, () => {
-  console.log(`Listening for requests on ${PORT}`);
+	console.log(`Server running on port ${PORT}`);
 });
 
 module.exports = app;
