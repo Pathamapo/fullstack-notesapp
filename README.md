@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Fullstack Notes App
 My first attempt at solo-building a full-stack MERN web application which suppports features like user authentication and profiles and responsive design. I have followed mobile-first development methodology to develop this project.
 

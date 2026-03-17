@@ -11,38 +11,46 @@ const Register = () => {
 	const [password, setPassword] = useState('');
 	const [hint, setHint] = useState('');
 
-	// Initialize history
 	const history = useHistory();
 
-	const { isLoggedIn, setIsLoggedIn } = useContext(AuthContext);
+	const { isLoggedIn } = useContext(AuthContext);
 
-	// TODO: CHECK IF USER IS LOGGED IN ALREADY
 	useEffect(() => {
-		if (isLoggedIn) history.push('/');
-	}, [isLoggedIn]);
+		if (isLoggedIn) {
+			history.push('/');
+		}
+	}, [isLoggedIn, history]);
 
 	// Functions
 	const handleSubmit = () => {
-		// console.log(username, email, password);
-
 		const url = `${process.env.REACT_APP_BACKEND_BASE_URL}/users/register`;
-		const body = { username, emailId: email, password };
-		const headers = { 'Content-Type': 'application/json' };
-		// console.log(body);
 
-		// POST user data to /user/register on backend
+		const body = {
+			username,
+			emailId: email,
+			password,
+		};
+
+		const headers = {
+			'Content-Type': 'application/json',
+		};
+
 		axios
 			.post(url, body, { headers })
 			.then((res) => {
 				if (res.data.success) {
 					setHint(res.data.message);
 					history.push('/login');
+				} else {
+					setHint(res.data.message || 'Registration failed');
 				}
 			})
 			.catch((err) => {
-				// console.log(err.response.data);
-				if (!err.response.data.success)
-					setHint('User validation failed. Input valid credentials');
+				const message =
+					err.response?.data?.message ||
+					'User validation failed. Input valid credentials';
+
+				setHint(message);
 			});
 	};
 
@@ -57,37 +65,40 @@ const Register = () => {
 						Let's register you!
 					</p>
 				</div>
+
 				<div>
-					<div className="">
-						<p className="w-11/12 text-center mt-3 text-lg text-font-secondary rounded">
-							{hint}
-						</p>
-						<input
-							type="text"
-							className="outline-none w-full p-4 my-3 rounded-lg border border-gray-700 bg-bg-black text-lg"
-							placeholder="Username"
-							autoComplete="off"
-							value={username}
-							onChange={(e) => setUsername(e.target.value)}
-						/>
-						<input
-							type="email"
-							className="outline-none w-full p-4 my-3 rounded-lg border border-gray-700 bg-bg-black text-lg"
-							placeholder="Email"
-							autoComplete="off"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-						/>
-						<input
-							type="password"
-							className="outline-none w-full p-4 my-3 rounded-lg border border-gray-700 bg-bg-black text-lg"
-							placeholder="Password"
-							autoComplete="off"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-						/>
-					</div>
+					<p className="w-11/12 text-center mt-3 text-lg text-font-secondary rounded">
+						{hint}
+					</p>
+
+					<input
+						type="text"
+						className="outline-none w-full p-4 my-3 rounded-lg border border-gray-700 bg-bg-black text-lg"
+						placeholder="Username"
+						autoComplete="off"
+						value={username}
+						onChange={(e) => setUsername(e.target.value)}
+					/>
+
+					<input
+						type="email"
+						className="outline-none w-full p-4 my-3 rounded-lg border border-gray-700 bg-bg-black text-lg"
+						placeholder="Email"
+						autoComplete="off"
+						value={email}
+						onChange={(e) => setEmail(e.target.value)}
+					/>
+
+					<input
+						type="password"
+						className="outline-none w-full p-4 my-3 rounded-lg border border-gray-700 bg-bg-black text-lg"
+						placeholder="Password"
+						autoComplete="off"
+						value={password}
+						onChange={(e) => setPassword(e.target.value)}
+					/>
 				</div>
+
 				<div>
 					<button
 						className="w-full p-4 my-3 rounded-lg text-black font-bold text-xl bg-font-main"
@@ -95,6 +106,7 @@ const Register = () => {
 					>
 						SUBMIT
 					</button>
+
 					<p className="text-center text-gray-400">
 						Have an account already?&nbsp;
 						<Link to="/login" className="underline">

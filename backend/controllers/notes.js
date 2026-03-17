@@ -21,10 +21,15 @@ exports.getNotes = async (req, res) => {
 };
 
 
-// CREATE NOTE
+// CREATE NOTE ✅ (แก้แล้ว)
 exports.postNote = async (req, res) => {
   try {
-    const note = await Note.create(req.body);
+    const { title, content } = req.body;
+
+    const note = await Note.create({
+      title,
+      content
+    });
 
     return res.status(201).json({
       success: true,
@@ -66,12 +71,14 @@ exports.getNote = async (req, res) => {
 };
 
 
-// UPDATE NOTE
+// UPDATE NOTE ✅ (แก้แล้ว)
 exports.updateNote = async (req, res) => {
   try {
+    const { title, content } = req.body;
+
     const note = await Note.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      { title, content },
       { new: true, runValidators: true }
     );
 

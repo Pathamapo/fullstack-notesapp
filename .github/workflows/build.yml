@@ -1,0 +1,45 @@
+name: SonarCloud
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonar:
+    name: SonarCloud + Trivy + Docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Scan dependencies (Trivy)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+
+      - name: Login Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_PASS }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
+
+      - name: Build Backend Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USER }}/notesapp-backend ./backend
+
+      - name: Push Backend Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USER }}/notesapp-backend
+
+      - name: Build Frontend Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USER }}/notesapp-frontend ./frontend
+
+      - name: Push Frontend Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USER }}/notesapp-frontend
