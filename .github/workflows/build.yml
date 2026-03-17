@@ -9,7 +9,7 @@ on:
 
 jobs:
   sonar:
-    name: SonarCloud
+    name: SonarCloud + Trivy
     runs-on: ubuntu-latest
 
     steps:
@@ -21,3 +21,9 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Scan dependencies (Trivy)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
