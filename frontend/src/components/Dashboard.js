@@ -68,7 +68,7 @@ const Dashboard = () => {
 			.catch((error) => console.log(error));
 	};
 
-	var noteColors = [
+	const noteColors = [
 		'bg-red-100',
 		'bg-blue-100',
 		'bg-yellow-100',
@@ -77,7 +77,7 @@ const Dashboard = () => {
 		'bg-rose-100',
 		'bg-orange-100',
 	];
-	var noteColorsCopy = [];
+	let noteColorsCopy = [];
 	noteColorsCopy = noteColorsCopy.concat(noteColors);
 
 	const getRandomColor = () => {
