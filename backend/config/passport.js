@@ -9,7 +9,7 @@ const options = {
 	usernameField: 'emailId',
 };
 
-verifyCallback = async (username, password, done) => {
+const verifyCallback = async (username, password, done) => {
 	try {
 		const user = await User.findOne({ emailId: username });
 
