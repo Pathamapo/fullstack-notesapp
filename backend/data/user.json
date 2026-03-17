@@ -3,16 +3,16 @@
         "__id": "qweqeqqerrwrwer",
         "username": "John Doe",
         "emailId": "johndoe@gmail.com",
-        "password": "1g3243g3bh324g32bh23"
+        "pass": "1g3243g3bh324g32bh23"
     },
 
     {
         "emailId": "Sumedh@gmail.com",
-        "password": "Sumedh123"
+        "pass": "Sumedh123"
     },
 
     {
         "emailId": "arnav@gmail.com",
-        "password": "arnav123"
+        "pass": "arnav123"
     }
 ]
