@@ -6,6 +6,7 @@ import {
 	useHistory,
 } from 'react-router-dom';
 
+import PropTypes from 'prop-types'; 
 import { AuthContext } from './context/AuthContext';
 import Create from './components/Create';
 import Dashboard from './components/Dashboard';
@@ -40,7 +41,7 @@ const AuthHandler = ({ setUsername, setIsLoggedIn }) => {
 				if (path === '/register') return;
 
 				if (path !== '/login') {
-					history.push('/login'); 
+					history.push('/login');
 				}
 
 				setIsLoggedIn(false);
@@ -48,6 +49,11 @@ const AuthHandler = ({ setUsername, setIsLoggedIn }) => {
 	}, [history, setUsername, setIsLoggedIn]);
 
 	return null;
+};
+
+AuthHandler.propTypes = {
+	setUsername: PropTypes.func.isRequired,
+	setIsLoggedIn: PropTypes.func.isRequired,
 };
 
 function App() {
