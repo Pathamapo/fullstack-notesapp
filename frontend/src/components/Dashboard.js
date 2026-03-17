@@ -15,7 +15,6 @@ const Dashboard = () => {
 
 	const { username, isLoggedIn, setIsLoggedIn } = useContext(AuthContext);
 
-	// ✅ fix: ไม่ reset ทุก render
 	const noteColors = [
 		'bg-red-100',
 		'bg-blue-100',
@@ -102,7 +101,6 @@ const Dashboard = () => {
 
 					<div className="flex items-center gap-3">
 
-						{/* ✅ FIX: ใช้ button แทน div */}
 						<button
 							className="rounded-full transition duration-150 text-3xl p-2 flex items-center cursor-pointer hover:-translate-y-1"
 							title="Log out"
