@@ -3,6 +3,7 @@ import {
 	BrowserRouter as Router,
 	Route,
 	Switch,
+	useHistory,
 } from 'react-router-dom';
 
 import { AuthContext } from './context/AuthContext';
@@ -14,9 +15,8 @@ import Register from './components/Register';
 
 import axios from 'axios';
 
-function App() {
-	const [username, setUsername] = useState('');
-	const [isLoggedIn, setIsLoggedIn] = useState(false);
+const AuthHandler = ({ setUsername, setIsLoggedIn }) => {
+	const history = useHistory();
 
 	useEffect(() => {
 		const URL = `${process.env.REACT_APP_BACKEND_BASE_URL}/users/is-logged`;
@@ -34,16 +34,26 @@ function App() {
 				setUsername(res.data.username);
 				setIsLoggedIn(true);
 			})
-			.catch((error) => {
-				if (window.location.href.endsWith('/register')) return;
-				if (!window.location.href.endsWith('/login')) {
-					window.location.href = '/login';
+			.catch(() => {
+				const path = history.location.pathname;
+
+				if (path === '/register') return;
+
+				if (path !== '/login') {
+					history.push('/login'); 
 				}
+
 				setIsLoggedIn(false);
 			});
-	}, []);
+	}, [history, setUsername, setIsLoggedIn]);
 
-	// ✅ แก้ SonarQube: ใช้ useMemo
+	return null;
+};
+
+function App() {
+	const [username, setUsername] = useState('');
+	const [isLoggedIn, setIsLoggedIn] = useState(false);
+
 	const authValue = useMemo(() => {
 		return { username, isLoggedIn, setIsLoggedIn };
 	}, [username, isLoggedIn]);
@@ -51,6 +61,11 @@ function App() {
 	return (
 		<AuthContext.Provider value={authValue}>
 			<Router>
+				<AuthHandler
+					setUsername={setUsername}
+					setIsLoggedIn={setIsLoggedIn}
+				/>
+
 				<Switch>
 					<Route exact path="/login">
 						<Login />
