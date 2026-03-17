@@ -2,67 +2,74 @@ const User = require('../models/Users');
 const { hash } = require('bcrypt');
 
 exports.registerUser = async (req, res) => {
-	try {
+  try {
 
-		let user = new User(req.body);
+    const { username, email, password } = req.body;
 
-		// Hash password
-		user.password = await hash(user.password, 10);
+    let user = new User({
+      username,
+      email,
+      password
+    });
 
-		user = await user.save();
+    // Hash password
+    user.password = await hash(user.password, 10);
 
-		res.status(200).json({
-			success: true,
-			message: 'User Registered',
-			user,
-		});
+    user = await user.save();
 
-	} catch (error) {
+    res.status(200).json({
+      success: true,
+      message: 'User Registered',
+      user,
+    });
 
-		res.status(400).json({
-			success: false,
-			message: error.message,
-		});
+  } catch (error) {
 
-	}
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
 };
 
 exports.loginUser = async (req, res) => {
 
-	res.status(200).json({
-		success: true,
-		message: 'User Logged In',
-		user: req.user,
-	});
+  res.status(200).json({
+    success: true,
+    message: 'User Logged In',
+    user: req.user,
+  });
 
 };
 
-exports.logoutUser = async (req, res) => {
+exports.logoutUser = async (req, res, next) => {
 
-	req.logout(function(err){
-		if(err){ return next(err); }
-	});
+  req.logout(function(err){
+    if(err){ return next(err); }
+  });
 
-	res.status(200).json({
-		success: true,
-		message: 'User Logged Out',
-	});
+  res.status(200).json({
+    success: true,
+    message: 'User Logged Out',
+  });
 
 };
+
 
 exports.isLoggedIn = async (req, res) => {
 
-	if (req.user) {
-		res.status(200).json({
-			success: true,
-			username: req.user.username,
-			message: 'Login is active.',
-		});
-	} else {
-		res.status(200).json({
-			success: false,
-			message: 'User not logged in',
-		});
-	}
+  if (req.user) {
+    res.status(200).json({
+      success: true,
+      username: req.user.username,
+      message: 'Login is active.',
+    });
+  } else {
+    res.status(200).json({
+      success: false,
+      message: 'User not logged in',
+    });
+  }
 
 };
