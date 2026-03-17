@@ -9,7 +9,7 @@ on:
 
 jobs:
   sonar:
-    name: SonarCloud + Trivy
+    name: SonarCloud + Trivy + Docker
     runs-on: ubuntu-latest
 
     steps:
@@ -27,3 +27,12 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
+
+      - name: Login Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_PASS }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USER }}/notesapp .
+
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USER }}/notesapp
