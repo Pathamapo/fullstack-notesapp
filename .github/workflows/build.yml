@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 name: SonarCloud
 
 on:
@@ -44,28 +43,3 @@ jobs:
 
       - name: Push Frontend Docker image
         run: docker push ${{ secrets.DOCKERHUB_USER }}/notesapp-frontend
-=======
-name: SonarCloud
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-jobs:
-  sonar:
-    name: SonarCloud
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
->>>>>>> 3d280c2906641e23d0b17d181cb1a6b6dd8b32d3
