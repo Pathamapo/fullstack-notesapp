@@ -25,6 +25,7 @@ test_backend:
     - npm test -- --watchAll=false || echo "Backend tests failed but moving to Build stage to unblock Pipeline"
   only:
     - dev-ci-docker
+    - main
 
 test_frontend:
   stage: test
@@ -35,6 +36,7 @@ test_frontend:
     - npm test -- --watchAll=false --passWithNoTests
   only:
     - dev-ci-docker
+    - main
 
 # Stage 2: Build Images (สร้างแผ่น CD ของระบบ)
 build_images:
@@ -45,6 +47,7 @@ build_images:
     - docker build -t $CI_REGISTRY_IMAGE/frontend:latest ./frontend
   only:
     - dev-ci-docker
+    - main
 
 # Stage 3: Push 
 push_images:
@@ -56,6 +59,7 @@ push_images:
     # เราไม่สั่ง push จริง แต่ให้ Job มัน Success เพื่อให้เขียวแผง
   only:
     - dev-ci-docker
+    - main
 
 # Stage 4: Deploy (ส่งต่อให้คนที่ 3)
 deploy_local:
@@ -67,3 +71,4 @@ deploy_local:
     name: production
   only:
     - dev-ci-docker
+    - main
