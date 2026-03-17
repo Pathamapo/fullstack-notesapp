@@ -4,70 +4,77 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const passport = require('passport');
 
+// Security middlewares
 const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require('helmet');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const cors = require('cors');
 
+// Routes
 const usersRoute = require('./routes/users');
 const notesRoute = require('./routes/notes');
 
+// DB
 const connectDB = require('./config/connectDB');
 
+// ENV
 dotenv.config({ path: './config/.env' });
 
+// Passport config
 require('./config/passport');
 
+// Initialize app
 const app = express();
 
+// Connect database
 connectDB();
 
+// Body parser
 app.use(express.json());
 
+// CORS
 app.use(cors({
-	origin: process.env.CLIENT_URL || 'http://localhost:3000',
+	origin: ['http://localhost', 'http://localhost:3000'],
 	credentials: true
 }));
 
+// Security
 app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 app.use(hpp());
 
-
-const sessionStore = MongoStore.create({
+// Session
+const sessionStore = new MongoStore({
 	mongoUrl: process.env.MONGO_DB_URI,
 });
 
 app.use(
 	session({
-		secret: process.env.SESSION_SECRET || 'secret123',
+		secret: process.env.SESSION_SECRET,
 		resave: false,
-		saveUninitialized: false,
+		saveUninitialized: true,
 		store: sessionStore,
 		cookie: {
 			maxAge: 1000 * 3600 * 24,
-			httpOnly: true,
 		},
 	})
 );
 
+// Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get('/', (req, res) => {
-	res.send('Backend is running 🚀');
-});
-
+// Routes
 app.use('/users', usersRoute);
 app.use('/notes', notesRoute);
 
-// ✅ Port (แก้ให้ตรง Docker)
-const PORT = process.env.PORT || 3001;
+// Server
+const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-	console.log(`Server running on port ${PORT}`);
+  console.log(`Listening for requests on ${PORT}`);
 });
 
 module.exports = app;
