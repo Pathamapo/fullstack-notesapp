@@ -9,7 +9,7 @@ on:
 
 jobs:
   sonar:
-    name: SonarCloud + Trivy + Docker
+    name: SonarCloud + Trivy + Docker + Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -33,13 +33,28 @@ jobs:
         run: echo "${{ secrets.DOCKERHUB_PASS }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
 
       - name: Build Backend Docker image
-        run: docker build -t ${{ secrets.DOCKERHUB_USER }}/notesapp-backend ./backend
+        run: docker build -t ${{ secrets.DOCKERHUB_USER }}/notesapp-backend:latest ./backend
 
       - name: Push Backend Docker image
-        run: docker push ${{ secrets.DOCKERHUB_USER }}/notesapp-backend
+        run: docker push ${{ secrets.DOCKERHUB_USER }}/notesapp-backend:latest
 
       - name: Build Frontend Docker image
-        run: docker build -t ${{ secrets.DOCKERHUB_USER }}/notesapp-frontend ./frontend
+        run: docker build -t ${{ secrets.DOCKERHUB_USER }}/notesapp-frontend:latest ./frontend
 
       - name: Push Frontend Docker image
-        run: docker push ${{ secrets.DOCKERHUB_USER }}/notesapp-frontend
+        run: docker push ${{ secrets.DOCKERHUB_USER }}/notesapp-frontend:latest
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+
+      - name: Set up kubeconfig
+        run: echo "${{ secrets.KUBECONFIG }}" > kubeconfig.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          export KUBECONFIG=$PWD/kubeconfig.yaml
+          kubectl get nodes
+          kubectl apply -f k8s/
