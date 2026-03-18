@@ -19,7 +19,7 @@ const notesRoute = require('./routes/notes');
 const connectDB = require('./config/connectDB');
 
 // ENV
-dotenv.config({ path: './config/.env' });
+dotenv.config();
 
 // Passport config
 require('./config/passport');
@@ -27,54 +27,95 @@ require('./config/passport');
 // Initialize app
 const app = express();
 
-// Connect database
+
+// ======================
+// ✅ Connect database
+// ======================
 connectDB();
 
-// Body parser
+
+// ======================
+// ✅ Body parser
+// ======================
 app.use(express.json());
 
-// CORS
+
+// ======================
+// ✅ CORS (รองรับ K8s + ENV)
+// ======================
 app.use(cors({
-	origin: ['http://localhost', 'http://localhost:3000'],
+	origin: process.env.FRONTEND_URL || 'http://localhost:3000',
 	credentials: true
 }));
 
-// Security
+
+// ======================
+// ✅ Security
+// ======================
 app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 app.use(hpp());
 
-// Session
-const sessionStore = new MongoStore({
-	mongoUrl: process.env.MONGO_DB_URI,
+
+// ======================
+// ✅ Session (แก้ ENV + secure)
+// ======================
+if (!process.env.MONGO_URI) {
+	console.error('❌ MONGO_URI is missing in .env');
+	process.exit(1);
+}
+
+const sessionStore = MongoStore.create({
+	mongoUrl: process.env.MONGO_URI,
 });
 
 app.use(
 	session({
 		secret: process.env.SESSION_SECRET,
 		resave: false,
-		saveUninitialized: true,
+		saveUninitialized: false, // 🔥 สำคัญ (ลด session ขยะ)
 		store: sessionStore,
 		cookie: {
-			maxAge: 1000 * 3600 * 24,
+			maxAge: 1000 * 60 * 60 * 24, // 1 day
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production', // 🔥 ใช้ https เท่านั้นใน prod
 		},
 	})
 );
 
-// Passport
+
+// ======================
+// ✅ Passport
+// ======================
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
+
+// ======================
+// ✅ Routes
+// ======================
 app.use('/users', usersRoute);
 app.use('/notes', notesRoute);
 
-// Server
+
+// ======================
+// ✅ Health check (สำคัญสำหรับ K8s)
+// ======================
+app.get('/health', (req, res) => {
+	res.status(200).json({ status: 'ok' });
+});
+
+
+// ======================
+// ✅ Server (แยกตอน test)
+// ======================
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log(`Listening for requests on ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+	app.listen(PORT, () => {
+		console.log(`🚀 Server running on port ${PORT}`);
+	});
+}
 
 module.exports = app;
