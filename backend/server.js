@@ -15,58 +15,101 @@ const notesRoute = require('./routes/notes');
 
 const connectDB = require('./config/connectDB');
 
-dotenv.config({ path: './config/.env' });
+// ENV
+dotenv.config();
 
 require('./config/passport');
 
 const app = express();
 
-if (!process.env.MONGO_URI) {
-  console.error('❌ MONGO_URI ไม่ถูกตั้งค่า!');
-  process.exit(1);
+
+// ======================
+// ✅ Connect database
+// ======================
+if (!process.env.MONGO_DB_URI) {
+	console.error('❌ MONGO_URI is missing in .env');
+	process.exit(1);
 }
+connectDB();
 
-connectDB(process.env.MONGO_URI);
 
+// ======================
+// ✅ Body parser
+// ======================
 app.use(express.json());
 
+
+// ======================
+// ✅ CORS
+// ======================
 app.use(cors({
-  origin: ['http://localhost', 'http://localhost:3000'],
-  credentials: true
+	origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+	credentials: true
 }));
 
+
+// ======================
+// ✅ Security
+// ======================
 app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 app.use(hpp());
 
+
+// ======================
+// ✅ Session
+// ======================
 const sessionStore = MongoStore.create({
-  mongoUrl: process.env.MONGO_URI, // ชื่อ env ตรงกับ Docker / K8s
-  ttl: 14 * 24 * 60 * 60, // 14 วัน
+	mongoUrl: process.env.MONGO_DB_URI,
 });
 
 app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'secret',
-    resave: false,
-    saveUninitialized: false,
-    store: sessionStore,
-    cookie: {
-      maxAge: 1000 * 3600 * 24, // 1 วัน
-    },
-  })
+	session({
+		secret: process.env.SESSION_SECRET,
+		resave: false,
+		saveUninitialized: false,
+		store: sessionStore,
+		cookie: {
+			maxAge: 1000 * 60 * 60 * 24,
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+		},
+	})
 );
 
+
+// ======================
+// ✅ Passport
+// ======================
 app.use(passport.initialize());
 app.use(passport.session());
 
+
+// ======================
+// ✅ Routes
+// ======================
 app.use('/users', usersRoute);
 app.use('/notes', notesRoute);
 
+
+// ======================
+// ✅ Health check
+// ======================
+app.get('/health', (req, res) => {
+	res.status(200).json({ status: 'ok' });
+});
+
+
+// ======================
+// ✅ Server
+// ======================
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log(`Listening for requests on ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+	app.listen(PORT, () => {
+		console.log(`🚀 Server running on port ${PORT}`);
+	});
+}
 
 module.exports = app;

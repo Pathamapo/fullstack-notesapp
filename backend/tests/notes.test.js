@@ -38,9 +38,11 @@ describe("Notes API", () => {
 
     expect(res.statusCode).toBe(200);
   });
-
+  jest.setTimeout(10000);
 });
-
+beforeAll(async () => {
+  await mongoose.connect(process.env.MONGO_DB_URI);
+});
 afterAll(async () => {
   await mongoose.connection.close();
 });
