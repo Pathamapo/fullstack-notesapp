@@ -4,73 +4,65 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const passport = require('passport');
 
-// Security middlewares
 const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require('helmet');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const cors = require('cors');
 
-// Routes
 const usersRoute = require('./routes/users');
 const notesRoute = require('./routes/notes');
 
-// DB
 const connectDB = require('./config/connectDB');
 
-// ENV
 dotenv.config({ path: './config/.env' });
 
-// Passport config
 require('./config/passport');
 
-// Initialize app
 const app = express();
 
-// Connect database
-connectDB();
+if (!process.env.MONGO_URI) {
+  console.error('❌ MONGO_URI ไม่ถูกตั้งค่า!');
+  process.exit(1);
+}
 
-// Body parser
+connectDB(process.env.MONGO_URI);
+
 app.use(express.json());
 
-// CORS
 app.use(cors({
-	origin: ['http://localhost', 'http://localhost:3000'],
-	credentials: true
+  origin: ['http://localhost', 'http://localhost:3000'],
+  credentials: true
 }));
 
-// Security
 app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 app.use(hpp());
 
-// Session
-const sessionStore = new MongoStore({
-	mongoUrl: process.env.MONGO_DB_URI,
+const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGO_URI, // ชื่อ env ตรงกับ Docker / K8s
+  ttl: 14 * 24 * 60 * 60, // 14 วัน
 });
 
 app.use(
-	session({
-		secret: process.env.SESSION_SECRET,
-		resave: false,
-		saveUninitialized: true,
-		store: sessionStore,
-		cookie: {
-			maxAge: 1000 * 3600 * 24,
-		},
-	})
+  session({
+    secret: process.env.SESSION_SECRET || 'secret',
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    cookie: {
+      maxAge: 1000 * 3600 * 24, // 1 วัน
+    },
+  })
 );
 
-// Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
 app.use('/users', usersRoute);
 app.use('/notes', notesRoute);
 
-// Server
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
